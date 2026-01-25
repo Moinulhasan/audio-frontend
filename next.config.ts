@@ -1,7 +1,7 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
+const nextConfig = {
+  output: 'export',
+  // Optional: Add a trailing slash to all URLs, useful for some hosting configurations
+  trailingSlash: true, 
 };
 
-export default nextConfig;
+module.exports = nextConfig;  

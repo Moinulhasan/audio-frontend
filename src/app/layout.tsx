@@ -13,8 +13,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EchoScript | AI Audio Transcription",
-  description: "High-end AI transcription tool powered by Whisper.",
+  title: "EcoNotes | Intelligent AI Audio Transcription",
+  description: "Transform your voice into organized notes with EcoNotes. High-precision AI transcription, multi-language support, and seamless audio recording for professionals and students.",
+  keywords: ["AI transcription", "audio to text", "EcoNotes", "voice notes", "speech recognition", "bengali transcription"],
+  openGraph: {
+    title: "EcoNotes | Intelligent AI Audio Transcription",
+    description: "Transform your voice into organized notes instantly with EcoNotes. Fast, accurate, and secure.",
+    url: "https://econotes.moinul4u.com",
+    siteName: "EcoNotes",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "EcoNotes | Intelligent AI Audio Transcription",
+    description: "Transform your voice into organized notes instantly with EcoNotes.",
+  },
 };
 
 export default function RootLayout({
