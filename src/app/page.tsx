@@ -20,6 +20,8 @@ import { AdUnit } from "@/components/AdUnit";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Logo } from "@/components/Logo";
 import { Moon, Sun } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -28,7 +30,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"upload" | "record">("upload");
   const [language, setLanguage] = useState<"en" | "bn">("en");
-  const [transcriptionType, setTranscriptionType] = useState<"normal" | "minutes" | "tasks" | "summary">("normal");
+  const [transcriptionType, setTranscriptionType] = useState<"normal" | "minutes" | "task" | "note" | "summaries">("normal");
   const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   // File Upload State
@@ -50,6 +52,7 @@ export default function Home() {
     "idle" | "uploading" | "processing" | "success" | "error"
   >("idle");
   const [transcription, setTranscription] = useState("");
+  const [responseType, setResponseType] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -243,7 +246,7 @@ export default function Home() {
       );
 
       clearInterval(msgInterval);
-    
+
       const resData = response.data;
       if (resData?.error ||
         (typeof resData === "string" && resData.includes("The audio field must be a file")) ||
@@ -251,11 +254,24 @@ export default function Home() {
         throw new Error(resData?.error || resData?.message || resData);
       }
 
-      if (!response.data.text) {
+      // Handle the new format { data: "...", type: "..." } or old { text: "..." }
+      let transcriptionText = resData.data || resData.text;
+      const transcriptionType = resData.type || "normal";
+
+      if (!transcriptionText) {
         throw new Error("No transcription received from server.");
       }
 
-      setTranscription(response.data.text);
+      // Handle "special characters" and cleaning
+      if (typeof transcriptionText === "string") {
+        // Replace double-escaped newlines if present
+        transcriptionText = transcriptionText.replace(/\\n/g, "\n");
+        // Trim and remove wrapping quotes if LLM added them
+        transcriptionText = transcriptionText.trim().replace(/^"(.*)"$/, "$1");
+      }
+
+      setTranscription(transcriptionText);
+      setResponseType(transcriptionType);
       setStatus("success");
     } catch (err: unknown) {
       console.error(err);
@@ -479,8 +495,9 @@ export default function Home() {
                         >
                           <option value="normal" className="bg-white dark:bg-gray-900">Normal (Verbatim)</option>
                           <option value="minutes" className="bg-white dark:bg-gray-900">Meeting Minutes</option>
-                          <option value="tasks" className="bg-white dark:bg-gray-900">Task Format</option>
-                          <option value="summary" className="bg-white dark:bg-gray-900">Summarize Concept</option>
+                          <option value="task" className="bg-white dark:bg-gray-900">Task Format</option>
+                          <option value="note" className="bg-white dark:bg-gray-900">Study Note</option>
+                          <option value="summaries" className="bg-white dark:bg-gray-900">Executive Summary</option>
                         </select>
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -589,8 +606,9 @@ export default function Home() {
                             >
                               <option value="normal" className="bg-white dark:bg-gray-900">Normal</option>
                               <option value="minutes" className="bg-white dark:bg-gray-900">Meeting Minutes</option>
-                              <option value="tasks" className="bg-white dark:bg-gray-900">Tasks</option>
-                              <option value="summary" className="bg-white dark:bg-gray-900">Summary</option>
+                              <option value="task" className="bg-white dark:bg-gray-900">Tasks</option>
+                              <option value="note" className="bg-white dark:bg-gray-900">Notes</option>
+                              <option value="summaries" className="bg-white dark:bg-gray-900">Summary</option>
                             </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -653,9 +671,16 @@ export default function Home() {
                     className="flex flex-col h-full w-full"
                   >
                     <div className="flex justify-between items-center mb-6">
-                      <div className="flex items-center gap-2 text-green-400">
-                        <Check className="w-5 h-5" />
-                        <span className="font-medium">Transcription Complete</span>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 text-green-500 dark:text-green-400">
+                          <Check className="w-5 h-5" />
+                          <span className="font-semibold">Transcription Complete</span>
+                        </div>
+                        {responseType && (
+                          <span className="px-3 py-1 rounded-full bg-echo-accent/10 border border-echo-accent/20 text-echo-accent text-xs font-bold uppercase tracking-wider">
+                            {responseType}
+                          </span>
+                        )}
                       </div>
                       <div className="flex gap-2">
                         <button
@@ -675,8 +700,12 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="bg-black/5 dark:bg-black/20 rounded-xl p-6 border border-black/5 dark:border-white/5 min-h-[300px] max-h-[500px] overflow-y-auto text-gray-700 dark:text-gray-200 leading-relaxed whitespace-pre-wrap font-sans">
-                      {transcription}
+                    <div className="bg-black/5 dark:bg-black/20 rounded-xl p-6 md:p-8 border border-black/5 dark:border-white/5 min-h-[300px] max-h-[600px] overflow-y-auto shadow-inner">
+                      <div className="prose prose-slate dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-black/20 prose-pre:border prose-pre:border-white/5">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {transcription}
+                        </ReactMarkdown>
+                      </div>
                     </div>
 
                     <button
