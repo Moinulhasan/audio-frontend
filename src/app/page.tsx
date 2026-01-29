@@ -23,8 +23,10 @@ import {
   Square,
   Sun,
   Upload,
+  User,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -63,6 +65,7 @@ export default function Home() {
   const audioChunksRef = useRef<Float32Array[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Core State
   const [status, setStatus] = useState<
@@ -72,6 +75,7 @@ export default function Home() {
   const [responseType, setResponseType] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const savedLang = localStorage.getItem("echoscript_lang") as "en" | "bn";
@@ -80,6 +84,14 @@ export default function Home() {
     const savedTheme =
       (localStorage.getItem("echoscript_theme") as "light" | "dark") || "dark";
     setTheme(savedTheme);
+
+    // Check session
+    const savedSession = localStorage.getItem("user_session");
+    const token = localStorage.getItem("auth_token");
+    if (savedSession && token) {
+      setIsLoggedIn(true);
+    }
+    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -99,6 +111,7 @@ export default function Home() {
     localStorage.setItem("echoscript_theme", newTheme);
   };
   const toggleLanguage = () => {
+    if (!mounted) return;
     const newLang = language === "en" ? "bn" : "en";
     setLanguage(newLang);
     localStorage.setItem("echoscript_lang", newLang);
@@ -353,12 +366,12 @@ export default function Home() {
         <div className="flex items-center gap-3">
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full bg-white/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-gray-600 dark:text-gray-300"
+            className="p-2.5 rounded-xl bg-white/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-gray-600 dark:text-gray-300"
             title={
-              theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"
+              mounted && theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"
             }
           >
-            {theme === "dark" ? (
+            {mounted && theme === "dark" ? (
               <Sun className="w-5 h-5" />
             ) : (
               <Moon className="w-5 h-5" />
@@ -367,11 +380,27 @@ export default function Home() {
 
           <button
             onClick={toggleLanguage}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-sm font-medium text-gray-600 dark:text-gray-300"
+            className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-sm font-bold text-gray-600 dark:text-gray-300 tracking-tight"
           >
             <Globe className="w-4 h-4" />
-            {language === "en" ? "English" : "বাংলা"}
+            {mounted && language === "bn" ? "বাংলা" : "English"}
           </button>
+
+          <div className="h-6 w-px bg-black/10 dark:bg-white/10 mx-1 hidden sm:block"></div>
+
+          {mounted && isLoggedIn ? (
+            <Link href="/profile">
+              <button className="p-2 w-10 h-10 rounded-xl bg-blue-600/10 dark:bg-blue-600/20 border border-blue-600/20 flex items-center justify-center text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 transition-all active:scale-[0.98]">
+                <User className="w-5 h-5" />
+              </button>
+            </Link>
+          ) : (
+            <Link href="/login">
+              <button className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm shadow-lg shadow-blue-500/20 hover:bg-blue-500 transition-all active:scale-[0.98] tracking-tight">
+                Sign In
+              </button>
+            </Link>
+          )}
         </div>
       </header>
 
@@ -835,9 +864,8 @@ export default function Home() {
         </section>
       </div>
 
-      {/* Footer */}
       <footer className="mt-8 mb-4 text-center text-gray-500 text-sm relative z-10">
-        <p>&copy; {new Date().getFullYear()} EcoNotes. All rights reserved.</p>
+        <p>&copy; {mounted ? new Date().getFullYear() : "2026"} EcoNotes. All rights reserved.</p>
       </footer>
     </div>
   );
