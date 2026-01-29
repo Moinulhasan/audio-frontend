@@ -18,8 +18,8 @@ export function AdUnit({ slot, format = "auto", className = "", label = "Adverti
     }, []);
 
     return (
-        <div className={`w-full flex flex-col items-center justify-center my-8 ${className}`}>
-            <span className="text-xs text-gray-600 uppercase tracking-widest mb-2">{label}</span>
+        <div className={`w-full flex flex-col items-center justify-center my-4 ${className}`}>
+            <span className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">{label}</span>
             <div
                 ref={adRef}
                 className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg flex items-center justify-center overflow-hidden min-h-[100px]"

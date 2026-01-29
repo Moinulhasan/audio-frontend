@@ -3,6 +3,7 @@
 
 @theme {
   --color-echo-accent: #38bdf8;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 
   --animate-waveform: waveform 1.2s ease-in-out infinite;
   --animate-fade-in: fadeIn 0.5s ease-out forwards;

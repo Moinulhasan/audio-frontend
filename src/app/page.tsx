@@ -1,36 +1,53 @@
 "use client";
 
+import { AdUnit } from "@/components/AdUnit";
+import { HowItWorks } from "@/components/HowItWorks";
+import { Logo } from "@/components/Logo";
+import { ModelShowcase } from "@/components/ModelShowcase";
 import axios from "axios";
 import { clsx } from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  BookOpen,
   Check,
+  CheckSquare,
   Copy,
   Download,
   FileAudio,
+  FileBadge,
+  FileText,
   Globe,
   Mic,
+  Moon,
   RotateCcw,
   Square,
+  Sun,
   Upload,
+  Users,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { twMerge } from "tailwind-merge";
-import { AdUnit } from "@/components/AdUnit";
-import { HowItWorks } from "@/components/HowItWorks";
-import { Logo } from "@/components/Logo";
-import { Moon, Sun } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { twMerge } from "tailwind-merge";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
+const OUTPUT_MODES = [
+  { id: "normal", label: "Verbatim", icon: FileText },
+  { id: "minutes", label: "Meeting Minutes", icon: Users },
+  { id: "task", label: "Task", icon: CheckSquare },
+  { id: "note", label: "Note", icon: BookOpen },
+  { id: "summaries", label: "Summary", icon: FileBadge },
+] as const;
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"upload" | "record">("upload");
   const [language, setLanguage] = useState<"en" | "bn">("en");
-  const [transcriptionType, setTranscriptionType] = useState<"normal" | "minutes" | "task" | "note" | "summaries">("normal");
+  const [transcriptionType, setTranscriptionType] = useState<
+    "normal" | "minutes" | "task" | "note" | "summaries"
+  >("normal");
   const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   // File Upload State
@@ -60,7 +77,8 @@ export default function Home() {
     const savedLang = localStorage.getItem("echoscript_lang") as "en" | "bn";
     if (savedLang) setLanguage(savedLang);
 
-    const savedTheme = (localStorage.getItem("echoscript_theme") as "light" | "dark") || "dark";
+    const savedTheme =
+      (localStorage.getItem("echoscript_theme") as "light" | "dark") || "dark";
     setTheme(savedTheme);
   }, []);
 
@@ -143,7 +161,9 @@ export default function Home() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioContext = new (
+        window.AudioContext || (window as any).webkitAudioContext
+      )();
       const source = audioContext.createMediaStreamSource(stream);
       const processor = audioContext.createScriptProcessor(4096, 1, 1);
 
@@ -187,7 +207,10 @@ export default function Home() {
       }
 
       if (audioChunksRef.current.length > 0) {
-        const wavBlob = encodeWAV(audioChunksRef.current, audioContextRef.current.sampleRate);
+        const wavBlob = encodeWAV(
+          audioChunksRef.current,
+          audioContextRef.current.sampleRate,
+        );
         setRecordedAudio(wavBlob);
         setFile(null);
       }
@@ -224,7 +247,10 @@ export default function Home() {
     // Assuming backend handles: plain, minutes, tasks, summary
     // If backend only knows 'plain', we might need to adjust or if it's AI generated, the prompt there handles it.
     // For now passing "type" which is standard in this plan.
-    formData.append("type", transcriptionType === "normal" ? "plain" : transcriptionType);
+    formData.append(
+      "type",
+      transcriptionType === "normal" ? "plain" : transcriptionType,
+    );
 
     try {
       const msgInterval = setInterval(() => {
@@ -248,9 +274,14 @@ export default function Home() {
       clearInterval(msgInterval);
 
       const resData = response.data;
-      if (resData?.error ||
-        (typeof resData === "string" && resData.includes("The audio field must be a file")) ||
-        (resData?.message && typeof resData.message === "string" && resData.message.includes("The audio field must be a file"))) {
+      if (
+        resData?.error ||
+        (typeof resData === "string" &&
+          resData.includes("The audio field must be a file")) ||
+        (resData?.message &&
+          typeof resData.message === "string" &&
+          resData.message.includes("The audio field must be a file"))
+      ) {
         throw new Error(resData?.error || resData?.message || resData);
       }
 
@@ -323,9 +354,15 @@ export default function Home() {
           <button
             onClick={toggleTheme}
             className="p-2 rounded-full bg-white/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-gray-600 dark:text-gray-300"
-            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            title={
+              theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"
+            }
           >
-            {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {theme === "dark" ? (
+              <Sun className="w-5 h-5" />
+            ) : (
+              <Moon className="w-5 h-5" />
+            )}
           </button>
 
           <button
@@ -339,10 +376,8 @@ export default function Home() {
       </header>
 
       <div className="flex flex-col w-full relative z-10">
-
         {/* HERO SECTION - No Sidebar Ads */}
-        <section className="min-h-screen flex flex-col items-center justify-center pt-24 pb-12 w-full max-w-3xl mx-auto px-4">
-
+        <section className="min-h-screen flex flex-col items-center justify-center pt-24 pb-12 w-full max-w-4xl mx-auto px-4">
           {/* Header Title */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -350,13 +385,12 @@ export default function Home() {
             className="text-center mb-8"
           >
             <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-gray-900 to-gray-600 dark:from-white dark:to-white/60 mb-4 tracking-tight">
-              Transcribe <span className="text-echo-accent">Instantly</span>
+              Transcribe <span className="text-blue-600 dark:text-blue-500">Instantly</span>
             </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
+            <p className="text-lg font-medium text-gray-600 dark:text-gray-400 max-w-lg mx-auto tracking-tight">
               Convert your audio to text with professional accuracy in seconds.
             </p>
           </motion.div>
-
 
           {/* Transcription Interface */}
           <motion.main
@@ -424,215 +458,270 @@ export default function Home() {
                 )}
 
                 {/* IDLE STATE - UPLOAD */}
-                {status === "idle" && activeTab === "upload" && !transcription && (
-                  <motion.div
-                    key="upload"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    className="flex flex-col items-center text-center w-full"
-                  >
-                    <div
-                      className={cn(
-                        "w-full h-64 border-2 border-dashed rounded-[2rem] flex flex-col items-center justify-center transition-all duration-300 cursor-pointer group mb-6 relative overflow-hidden",
-                        dragActive
-                          ? "border-echo-accent bg-echo-accent/5 scale-[1.01] shadow-inner"
-                          : "border-black/10 dark:border-white/20 bg-gradient-to-br from-black/[0.01] to-black/[0.03] dark:from-white/[0.01] dark:to-white/[0.03] hover:border-echo-accent/40 hover:bg-white/[0.05] dark:hover:bg-white/[0.05] shadow-sm",
-                      )}
-                      onDragEnter={handleDrag}
-                      onDragLeave={handleDrag}
-                      onDragOver={handleDrag}
-                      onDrop={handleDrop}
-                      onClick={() =>
-                        document.getElementById("file-upload")?.click()
-                      }
+                {status === "idle" &&
+                  activeTab === "upload" &&
+                  !transcription && (
+                    <motion.div
+                      key="upload"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="flex flex-col items-center text-center w-full"
                     >
-                      <input
-                        id="file-upload"
-                        type="file"
-                        className="hidden"
-                        accept="audio/*,video/*"
-                        onChange={handleChange}
-                      />
-
-                      {file ? (
-                        <div className="flex flex-col items-center gap-4">
-                          <div className="w-16 h-16 rounded-full bg-echo-accent/20 flex items-center justify-center text-echo-accent">
-                            <FileAudio className="w-8 h-8" />
-                          </div>
-                          <div>
-                            <p className="text-lg font-medium text-gray-900 dark:text-white break-all max-w-md">
-                              {file.name}
-                            </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                              Ready to transcribe
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center gap-4">
-                          <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-gray-400 group-hover:text-gray-600 dark:group-hover:text-white transition-colors">
-                            <Upload className="w-8 h-8" />
-                          </div>
-                          <div>
-                            <p className="text-lg font-medium text-gray-900 dark:text-white">
-                              Drag & drop audio here
-                            </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                              or click to browse files
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-8 flex flex-col md:flex-row items-center justify-center gap-4 w-full max-w-xl">
-                      <div className="relative flex-1 w-full group">
-                        <select
-                          value={transcriptionType}
-                          onChange={(e) => setTranscriptionType(e.target.value as any)}
-                          className="w-full bg-black/5 dark:bg-black/40 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-echo-accent/50 appearance-none cursor-pointer hover:bg-black/10 dark:hover:bg-white/5 transition-all text-sm font-medium pr-10"
-                        >
-                          <option value="normal" className="bg-white dark:bg-gray-900">Normal (Verbatim)</option>
-                          <option value="minutes" className="bg-white dark:bg-gray-900">Meeting Minutes</option>
-                          <option value="task" className="bg-white dark:bg-gray-900">Task Format</option>
-                          <option value="note" className="bg-white dark:bg-gray-900">Study Note</option>
-                          <option value="summaries" className="bg-white dark:bg-gray-900">Executive Summary</option>
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </div>
-                      </div>
-
-                      <button
-                        disabled={!file}
-                        onClick={handleTranscribe}
-                        className="px-8 py-3 bg-gradient-to-r from-echo-accent to-blue-600 rounded-xl text-white font-semibold shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none whitespace-nowrap"
+                      <div
+                        className={cn(
+                          "w-full h-64 border-2 border-dashed rounded-[2rem] flex flex-col items-center justify-center transition-all duration-300 cursor-pointer group mb-6 relative overflow-hidden",
+                          dragActive
+                            ? "border-echo-accent bg-echo-accent/5 scale-[1.01] shadow-inner"
+                            : "border-black/10 dark:border-white/20 bg-gradient-to-br from-black/[0.01] to-black/[0.03] dark:from-white/[0.01] dark:to-white/[0.03] hover:border-echo-accent/40 hover:bg-white/[0.05] dark:hover:bg-white/[0.05] shadow-sm",
+                        )}
+                        onDragEnter={handleDrag}
+                        onDragLeave={handleDrag}
+                        onDragOver={handleDrag}
+                        onDrop={handleDrop}
+                        onClick={() =>
+                          document.getElementById("file-upload")?.click()
+                        }
                       >
-                        {file ? "Transcribe Now" : "Upload & Transcribe"}
-                      </button>
+                        <input
+                          id="file-upload"
+                          type="file"
+                          className="hidden"
+                          accept="audio/*,video/*"
+                          onChange={handleChange}
+                        />
 
-                      {file && (
-                        <button
-                          onClick={() => setFile(null)}
-                          className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-300 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* IDLE STATE - RECORD */}
-                {status === "idle" && activeTab === "record" && !transcription && (
-                  <motion.div
-                    key="record"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="flex flex-col items-center text-center w-full"
-                  >
-                    {/* Visualizer / Timer Display */}
-                    <div className="w-full h-64 bg-black/20 rounded-2xl border border-white/5 flex flex-col items-center justify-center relative overflow-hidden mb-8">
-                      {isRecording ? (
-                        <>
-                          <div className="flex items-center gap-1 h-16 mb-4">
-                            {[...Array(12)].map((_, i) => (
-                              <div
-                                key={i}
-                                className="w-2 bg-red-500 rounded-full animate-waveform"
-                                style={{
-                                  animationDelay: `${i * 0.05}s`,
-                                  height: `${[40, 70, 30, 80, 50, 90, 40, 60, 30, 70, 40, 60][i]}%`,
-                                }}
-                              />
-                            ))}
-                          </div>
-                          <div className="text-4xl font-mono text-red-500 animate-pulse">
-                            {formatTime(recordingTime)}
-                          </div>
-                          <div className="absolute top-4 right-4 flex items-center gap-2">
-                            <div className="w-3 h-3 bg-red-500 rounded-full animate-ping" />
-                            <span className="text-xs text-red-500 font-bold uppercase tracking-widest">
-                              Rec
-                            </span>
-                          </div>
-                        </>
-                      ) : recordedAudio ? (
-                        <div className="flex flex-col items-center gap-4">
-                          <div className="w-20 h-20 rounded-full bg-echo-accent/20 flex items-center justify-center text-echo-accent">
-                            <FileAudio className="w-10 h-10" />
-                          </div>
-                          <div className="text-2xl font-mono text-gray-900 dark:text-white">
-                            {formatTime(recordingTime)}
-                          </div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">Audio Recorded</p>
-                        </div>
-                      ) : (
-                        <div className="text-gray-400 dark:text-gray-500 text-lg font-light">
-                          Click the microphone to start recording
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Controls */}
-                    <div className={cn("flex items-center gap-4", recordedAudio ? "flex-col" : "flex-row")}>
-                      {!isRecording && !recordedAudio && (
-                        <button
-                          onClick={startRecording}
-                          className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 shadow-xl shadow-red-500/20 flex items-center justify-center text-white transition-all hover:scale-110 active:scale-95"
-                        >
-                          <Mic className="w-8 h-8" />
-                        </button>
-                      )}
-
-                      {isRecording && (
-                        <button
-                          onClick={stopRecording}
-                          className="w-16 h-16 rounded-full bg-gray-200 hover:bg-white shadow-xl shadow-white/10 flex items-center justify-center text-black transition-all hover:scale-110 active:scale-95"
-                        >
-                          <Square className="w-6 h-6 fill-current" />
-                        </button>
-                      )}
-
-                      {recordedAudio && (
-                        <div className="flex flex-col md:flex-row items-center justify-center gap-4 w-full max-w-xl">
-                          <div className="relative flex-1 w-full group">
-                            <select
-                              value={transcriptionType}
-                              onChange={(e) => setTranscriptionType(e.target.value as any)}
-                              className="w-full bg-black/5 dark:bg-black/40 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-echo-accent/50 appearance-none cursor-pointer hover:bg-black/10 dark:hover:bg-white/5 transition-all text-sm font-medium pr-10 text-center"
-                            >
-                              <option value="normal" className="bg-white dark:bg-gray-900">Normal</option>
-                              <option value="minutes" className="bg-white dark:bg-gray-900">Meeting Minutes</option>
-                              <option value="task" className="bg-white dark:bg-gray-900">Tasks</option>
-                              <option value="note" className="bg-white dark:bg-gray-900">Notes</option>
-                              <option value="summaries" className="bg-white dark:bg-gray-900">Summary</option>
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                        {file ? (
+                          <div className="flex flex-col items-center gap-4">
+                            <div className="w-16 h-16 rounded-full bg-blue-600/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                              <FileAudio className="w-8 h-8" />
+                            </div>
+                            <div>
+                              <p className="text-lg font-bold text-gray-900 dark:text-white tracking-tight break-all max-w-md">
+                                {file.name}
+                              </p>
+                              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1 tracking-tight">
+                                Ready to transcribe
+                              </p>
                             </div>
                           </div>
-                          <button
-                            disabled={!recordedAudio}
-                            onClick={handleTranscribe}
-                            className="px-8 py-3 bg-gradient-to-r from-echo-accent to-blue-600 rounded-xl text-white font-semibold shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
-                          >
-                            Transcribe Recording
-                          </button>
-                          <button
-                            onClick={resetRecording}
-                            className="p-3 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                            title="Retake"
-                          >
-                            <RotateCcw className="w-6 h-6" />
-                          </button>
+                        ) : (
+                          <div className="flex flex-col items-center gap-4">
+                            <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-gray-400 group-hover:text-gray-600 dark:group-hover:text-white transition-colors">
+                              <Upload className="w-8 h-8" />
+                            </div>
+                            <div>
+                              <p className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+                                Drag & drop audio here
+                              </p>
+                              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1 tracking-tight">
+                                or click to browse files
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-8 flex flex-col gap-6 w-full">
+                        {/* Output Mode Selection - Single horizontal line */}
+                        <div className="bg-black/5 dark:bg-black/40 p-3 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm dark:shadow-none">
+                          <div className="flex flex-row gap-2 overflow-x-auto scrollbar-hide">
+                            {OUTPUT_MODES.map((mode) => (
+                              <button
+                                key={mode.id}
+                                onClick={() =>
+                                  setTranscriptionType(mode.id as any)
+                                }
+                                className={cn(
+                                  "flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border transition-all duration-300 relative overflow-hidden group min-w-fit",
+                                  transcriptionType === mode.id
+                                    ? "bg-blue-600/10 border-blue-600/40 text-blue-600 dark:text-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.1)]"
+                                    : "bg-white dark:bg-white/[0.03] border-black/10 dark:border-white/5 text-gray-600 dark:text-gray-400 hover:border-black/20 dark:hover:border-white/10 hover:bg-black/[0.02] dark:hover:bg-white/10",
+                                )}
+                              >
+                                <mode.icon
+                                  className={cn(
+                                    "w-3.5 h-3.5 transition-colors",
+                                    transcriptionType === mode.id
+                                      ? "text-blue-500"
+                                      : "text-gray-500 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-300",
+                                  )}
+                                />
+                                <span className="font-bold text-[10px] tracking-tight whitespace-nowrap uppercase">
+                                  {mode.label}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
+
+                        {/* Action Button Container - Full width row */}
+                        <div className="flex flex-col items-center gap-4 w-full">
+                          <button
+                            disabled={!file}
+                            onClick={handleTranscribe}
+                            className="w-full max-w-sm px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-3 group border border-white/10"
+                          >
+                            <span className="text-[15px] tracking-tight">
+                              Upload & Transcribe
+                            </span>
+                            <Upload className="w-4 h-4 opacity-80 group-hover:translate-y-[-2px] transition-transform" />
+                          </button>
+
+                          {file && (
+                            <button
+                              onClick={() => setFile(null)}
+                              className="text-[10px] font-bold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors uppercase tracking-[0.2em]"
+                            >
+                              Reset file
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                {/* IDLE STATE - RECORD */}
+                {status === "idle" &&
+                  activeTab === "record" &&
+                  !transcription && (
+                    <motion.div
+                      key="record"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="flex flex-col items-center text-center w-full"
+                    >
+                      {/* Visualizer / Timer Display */}
+                      <div className="w-full h-64 bg-black/20 rounded-2xl border border-white/5 flex flex-col items-center justify-center relative overflow-hidden mb-8">
+                        {isRecording ? (
+                          <>
+                            <div className="flex items-center gap-1 h-16 mb-4">
+                              {[...Array(12)].map((_, i) => (
+                                <div
+                                  key={i}
+                                  className="w-2 bg-red-500 rounded-full animate-waveform"
+                                  style={{
+                                    animationDelay: `${i * 0.05}s`,
+                                    height: `${[40, 70, 30, 80, 50, 90, 40, 60, 30, 70, 40, 60][i]}%`,
+                                  }}
+                                />
+                              ))}
+                            </div>
+                            <div className="text-4xl font-mono text-red-500 animate-pulse">
+                              {formatTime(recordingTime)}
+                            </div>
+                            <div className="absolute top-4 right-4 flex items-center gap-2">
+                              <div className="w-3 h-3 bg-red-500 rounded-full animate-ping" />
+                              <span className="text-xs text-red-500 font-bold uppercase tracking-widest">
+                                Rec
+                              </span>
+                            </div>
+                          </>
+                        ) : recordedAudio ? (
+                          <div className="flex flex-col items-center gap-4">
+                            <div className="w-20 h-20 rounded-full bg-echo-accent/20 flex items-center justify-center text-echo-accent">
+                              <FileAudio className="w-10 h-10" />
+                            </div>
+                            <div className="text-2xl font-mono text-gray-900 dark:text-white">
+                              {formatTime(recordingTime)}
+                            </div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              Audio Recorded
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="text-gray-400 dark:text-gray-500 text-lg font-bold tracking-tight">
+                            Click the microphone to start recording
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Controls */}
+                      <div
+                        className={cn(
+                          "flex items-center gap-4",
+                          recordedAudio ? "flex-col" : "flex-row",
+                        )}
+                      >
+                        {!isRecording && !recordedAudio && (
+                          <button
+                            onClick={startRecording}
+                            className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 shadow-xl shadow-red-500/20 flex items-center justify-center text-white transition-all hover:scale-110 active:scale-95"
+                          >
+                            <Mic className="w-8 h-8" />
+                          </button>
+                        )}
+
+                        {isRecording && (
+                          <button
+                            onClick={stopRecording}
+                            className="w-16 h-16 rounded-full bg-gray-200 hover:bg-white shadow-xl shadow-white/10 flex items-center justify-center text-black transition-all hover:scale-110 active:scale-95"
+                          >
+                            <Square className="w-6 h-6 fill-current" />
+                          </button>
+                        )}
+
+                        {recordedAudio && (
+                          <div className="mt-8 flex flex-col gap-6 w-full">
+                            {/* Output Mode Selection - Single horizontal line */}
+                            <div className="bg-black/5 dark:bg-black/40 p-3 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm dark:shadow-none">
+                              <div className="flex flex-row gap-2 overflow-x-auto scrollbar-hide">
+                                {OUTPUT_MODES.map((mode) => (
+                                  <button
+                                    key={mode.id}
+                                    onClick={() =>
+                                      setTranscriptionType(mode.id as any)
+                                    }
+                                    className={cn(
+                                      "flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border transition-all duration-300 relative overflow-hidden group min-w-fit",
+                                      transcriptionType === mode.id
+                                        ? "bg-blue-600/10 border-blue-600/40 text-blue-600 dark:text-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.1)]"
+                                        : "bg-white dark:bg-white/[0.03] border-black/10 dark:border-white/5 text-gray-600 dark:text-gray-400 hover:border-black/20 dark:hover:border-white/10 hover:bg-black/[0.02] dark:hover:bg-white/10",
+                                    )}
+                                  >
+                                    <mode.icon
+                                      className={cn(
+                                        "w-3.5 h-3.5 transition-colors",
+                                        transcriptionType === mode.id
+                                          ? "text-blue-500"
+                                          : "text-gray-500 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-300",
+                                      )}
+                                    />
+                                    <span className="font-bold text-[10px] tracking-tight whitespace-nowrap uppercase">
+                                      {mode.label}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Action Button Container - Full width row */}
+                            <div className="flex flex-col items-center gap-4 w-full">
+                              <button
+                                disabled={!recordedAudio}
+                                onClick={handleTranscribe}
+                                className="w-full max-w-sm px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-3 group border border-white/10"
+                              >
+                                <span className="text-[15px] tracking-tight">
+                                  Process & Transcribe
+                                </span>
+                                <Mic className="w-4 h-4 opacity-80 group-hover:scale-110 transition-transform" />
+                              </button>
+                              <button
+                                onClick={resetRecording}
+                                className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest"
+                                title="Retake"
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                                Reset
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
 
                 {/* LOADING STATE - SHARED */}
                 {(status === "uploading" || status === "processing") && (
@@ -672,12 +761,14 @@ export default function Home() {
                   >
                     <div className="flex justify-between items-center mb-6">
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 text-green-500 dark:text-green-400">
+                        <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
                           <Check className="w-5 h-5" />
-                          <span className="font-semibold">Transcription Complete</span>
+                          <span className="font-semibold">
+                            Transcription Complete
+                          </span>
                         </div>
                         {responseType && (
-                          <span className="px-3 py-1 rounded-full bg-echo-accent/10 border border-echo-accent/20 text-echo-accent text-xs font-bold uppercase tracking-wider">
+                          <span className="px-3 py-1 rounded-full bg-blue-600/10 border border-blue-600/20 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">
                             {responseType}
                           </span>
                         )}
@@ -700,7 +791,7 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="bg-black/5 dark:bg-black/20 rounded-xl p-6 md:p-8 border border-black/5 dark:border-white/5 min-h-[300px] max-h-[600px] overflow-y-auto shadow-inner">
+                    <div className="bg-white dark:bg-black/20 rounded-xl p-6 md:p-8 border border-black/10 dark:border-white/5 min-h-[300px] max-h-[600px] overflow-y-auto shadow-inner">
                       <div className="prose prose-slate dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-black/20 prose-pre:border prose-pre:border-white/5">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {transcription}
@@ -728,39 +819,25 @@ export default function Home() {
           </motion.main>
         </section>
 
-        {/* CONTENT SECTION - Ads & How It Works */}
-        <section className="container mx-auto px-4 pb-12 flex flex-col lg:flex-row gap-8 relative z-10 border-t border-black/5 dark:border-white/5 pt-12">
-          {/* Left Ad Sidebar */}
-          <aside className="hidden lg:block w-[200px] sticky top-24 h-fit">
-            <AdUnit slot="left-sidebar" format="rectangle" label="Ad Space" className="my-0" />
-            <AdUnit slot="left-sidebar-2" format="rectangle" label="Ad Space" />
-          </aside>
+        {/* CONTENT SECTION - How It Works & Ads */}
+        <section className="container mx-auto px-4 pb-12 relative z-10 border-t border-black/5 dark:border-white/5 pt-12">
+          <div className="max-w-7xl mx-auto flex flex-col items-center">
+            {/* <AdUnit className="w-full" label="Sponsored" /> */}
 
-          {/* Main Center Content */}
-          <div className="flex-1 flex flex-col items-center">
-
-            <AdUnit className="lg:hidden w-full" label="Sponsored" />
-
-            {/* New How It Works Section */}
+            {/* How It Works Section */}
             <HowItWorks />
 
-            <AdUnit className="w-full" label="Sponsored" />
+            {/* AI Models Showcase Section */}
+            <ModelShowcase />
+
+            {/* <AdUnit className="w-full" label="Sponsored" /> */}
           </div>
-
-          {/* Right Ad Sidebar */}
-          <aside className="hidden lg:block w-[200px] sticky top-24 h-fit">
-            <AdUnit slot="right-sidebar" format="rectangle" label="Ad Space" className="my-0" />
-            <AdUnit slot="right-sidebar-2" format="rectangle" label="Ad Space" />
-          </aside>
         </section>
-
       </div>
 
       {/* Footer */}
       <footer className="mt-8 mb-4 text-center text-gray-500 text-sm relative z-10">
-        <p>
-          &copy; {new Date().getFullYear()} EcoNotes. All rights reserved.
-        </p>
+        <p>&copy; {new Date().getFullYear()} EcoNotes. All rights reserved.</p>
       </footer>
     </div>
   );
