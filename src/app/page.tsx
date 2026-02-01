@@ -403,7 +403,7 @@ export default function Home() {
 
       <div className="flex flex-col w-full relative z-10">
         {/* HERO SECTION - No Sidebar Ads */}
-        <section className="min-h-screen flex flex-col items-center justify-center pt-24 pb-12 w-full max-w-4xl mx-auto px-4">
+        <section className="min-h-screen flex flex-col items-center justify-center pt-20 pb-8 w-full max-w-4xl mx-auto px-4">
           {/* Header Title */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -470,7 +470,7 @@ export default function Home() {
               </div>
             )}
 
-            <div className="glass-panel w-full rounded-[2.5rem] p-6 md:p-10 overflow-hidden relative min-h-[350px] flex flex-col justify-center mb-12 shadow-2xl shadow-black/5 dark:shadow-blue-900/10 border-black/5 dark:border-white/10">
+            <div className="glass-panel w-full rounded-[2.5rem] p-6 md:p-10 overflow-hidden relative min-h-[350px] flex flex-col justify-center mb-8 shadow-2xl shadow-black/5 dark:shadow-blue-900/10 border-black/5 dark:border-white/10">
               <AnimatePresence mode="wait">
                 {/* ERROR DISPLAY */}
                 {errorMessage && (
@@ -841,11 +841,48 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="bg-white dark:bg-black/20 rounded-xl p-6 md:p-8 border border-black/10 dark:border-white/5 min-h-[300px] max-h-[600px] overflow-y-auto shadow-inner">
+                    <div className="bg-white dark:bg-black/20 rounded-xl p-6 md:p-8 border border-black/10 dark:border-white/5 min-h-[300px] max-h-[600px] overflow-y-auto shadow-inner mb-6">
                       <div className="prose prose-slate dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-black/20 prose-pre:border prose-pre:border-white/5">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {transcription}
                         </ReactMarkdown>
+                      </div>
+                    </div>
+
+                    {/* Regeneration Controls */}
+                    <div className="flex flex-col gap-4 p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
+                      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                        <div className="bg-white dark:bg-black/20 p-1.5 rounded-xl border border-black/5 dark:border-white/5 w-full sm:w-auto overflow-x-auto">
+                          <div className="flex flex-row gap-1">
+                            {OUTPUT_MODES.map((mode) => (
+                              <button
+                                key={mode.id}
+                                onClick={() => setTranscriptionType(mode.id as any)}
+                                className={cn(
+                                  "flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all duration-300 relative overflow-hidden whitespace-nowrap",
+                                  transcriptionType === mode.id
+                                    ? "bg-blue-600 text-white shadow-md"
+                                    : "text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10"
+                                )}
+                              >
+                                <mode.icon className="w-3.5 h-3.5" />
+                                <span className="text-[10px] font-bold uppercase tracking-wider">
+                                  {mode.label}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex gap-3 w-full sm:w-auto">
+                          <button
+                            onClick={handleTranscribe}
+                            className="flex-1 sm:flex-none px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                            Regenerate
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -859,8 +896,7 @@ export default function Home() {
                       }}
                       className="mt-6 self-start text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
                     >
-                      ← Transcribe another{" "}
-                      {activeTab === "record" ? "recording" : "file"}
+                      ← Start New Transcription
                     </button>
                   </motion.div>
                 )}
@@ -870,7 +906,7 @@ export default function Home() {
         </section>
 
         {/* CONTENT SECTION - How It Works & Ads */}
-        <section className="container mx-auto px-4 pb-12 relative z-10 border-t border-black/5 dark:border-white/5 pt-12">
+        <section className="container mx-auto px-4 pb-8 relative z-10 border-t border-black/5 dark:border-white/5 pt-8">
           <div className="max-w-7xl mx-auto flex flex-col items-center">
             {/* <AdUnit className="w-full" label="Sponsored" /> */}
 
@@ -887,11 +923,11 @@ export default function Home() {
         </section>
       </div>
 
-      <footer className="mt-8 mb-4 text-center text-gray-500 text-sm relative z-10">
-        <p>
+      <footer className="mt-4 mb-4 text-center text-gray-500 text-sm relative z-10">
+        {/* <p>
           &copy; {mounted ? new Date().getFullYear() : "2026"} EcoNotes. All
           rights reserved.
-        </p>
+        </p> */}
       </footer>
     </div>
   );
