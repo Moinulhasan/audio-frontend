@@ -1,9 +1,10 @@
 "use client";
 
-import { AdUnit } from "@/components/AdUnit";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Logo } from "@/components/Logo";
 import { ModelShowcase } from "@/components/ModelShowcase";
+import { Pricing } from "@/components/Pricing";
+import { apiFetch } from "@/lib/api";
 import axios from "axios";
 import { clsx } from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
@@ -27,7 +28,8 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { twMerge } from "tailwind-merge";
@@ -51,6 +53,7 @@ export default function Home() {
     "normal" | "minutes" | "task" | "note" | "summaries"
   >("normal");
   const [theme, setTheme] = useState<"light" | "dark">("dark");
+  const router = useRouter();
 
   // File Upload State
   const [file, setFile] = useState<File | null>(null);
@@ -66,6 +69,12 @@ export default function Home() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const fileUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+  const recordedUrl = useMemo(
+    () => (recordedAudio ? URL.createObjectURL(recordedAudio) : null),
+    [recordedAudio],
+  );
 
   // Core State
   const [status, setStatus] = useState<
@@ -243,6 +252,14 @@ export default function Home() {
 
   // --- Transcribe Logic ---
   const handleTranscribe = async () => {
+    if (!isLoggedIn) {
+      showError("Please login to continue transcribing.");
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+      return;
+    }
+
     const activeFile =
       file ||
       (recordedAudio
@@ -256,10 +273,6 @@ export default function Home() {
     const formData = new FormData();
     formData.append("audio", activeFile);
     formData.append("language", language);
-    // Map internal type to API expected values
-    // Assuming backend handles: plain, minutes, tasks, summary
-    // If backend only knows 'plain', we might need to adjust or if it's AI generated, the prompt there handles it.
-    // For now passing "type" which is standard in this plan.
     formData.append(
       "type",
       transcriptionType === "normal" ? "plain" : transcriptionType,
@@ -276,27 +289,12 @@ export default function Home() {
         );
       }, 2000);
 
-      const response = await axios.post(
-        "https://audioapi.moinul4u.com/api/transcribe",
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
-      );
+      const resData = await apiFetch("/transcribe", {
+        method: "POST",
+        body: formData,
+      });
 
       clearInterval(msgInterval);
-
-      const resData = response.data;
-      if (
-        resData?.error ||
-        (typeof resData === "string" &&
-          resData.includes("The audio field must be a file")) ||
-        (resData?.message &&
-          typeof resData.message === "string" &&
-          resData.message.includes("The audio field must be a file"))
-      ) {
-        throw new Error(resData?.error || resData?.message || resData);
-      }
 
       // Handle the new format { data: "...", type: "..." } or old { text: "..." }
       let transcriptionText = resData.data || resData.text;
@@ -317,17 +315,14 @@ export default function Home() {
       setTranscription(transcriptionText);
       setResponseType(transcriptionType);
       setStatus("success");
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error(err);
       setStatus("error");
-      if (axios.isAxiosError(err)) {
-        setErrorMessage(
-          err.response?.data?.error ||
-          err.response?.data?.message ||
-          "Failed to transcribe audio.",
-        );
+      if (err.status === 401) {
+        setErrorMessage("Please login to continue transcribing.");
+        setTimeout(() => router.push("/login"), 1500);
       } else {
-        setErrorMessage("An unexpected error occurred.");
+        setErrorMessage(err.message || "Failed to transcribe audio.");
       }
     }
   };
@@ -368,7 +363,9 @@ export default function Home() {
             onClick={toggleTheme}
             className="p-2.5 rounded-xl bg-white/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-gray-600 dark:text-gray-300"
             title={
-              mounted && theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"
+              mounted && theme === "dark"
+                ? "Switch to Light Mode"
+                : "Switch to Dark Mode"
             }
           >
             {mounted && theme === "dark" ? (
@@ -414,7 +411,10 @@ export default function Home() {
             className="text-center mb-8"
           >
             <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-gray-900 to-gray-600 dark:from-white dark:to-white/60 mb-4 tracking-tight">
-              Transcribe <span className="text-blue-600 dark:text-blue-500">Instantly</span>
+              Transcribe{" "}
+              <span className="text-blue-600 dark:text-blue-500">
+                Instantly
+              </span>
             </h1>
             <p className="text-lg font-medium text-gray-600 dark:text-gray-400 max-w-lg mx-auto tracking-tight">
               Convert your audio to text with professional accuracy in seconds.
@@ -521,7 +521,7 @@ export default function Home() {
                         />
 
                         {file ? (
-                          <div className="flex flex-col items-center gap-4">
+                          <div className="flex flex-col items-center gap-4 w-full">
                             <div className="w-16 h-16 rounded-full bg-blue-600/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
                               <FileAudio className="w-8 h-8" />
                             </div>
@@ -533,6 +533,18 @@ export default function Home() {
                                 Ready to transcribe
                               </p>
                             </div>
+                            {fileUrl && (
+                              <div
+                                className="w-full mt-2 px-4"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <audio
+                                  controls
+                                  src={fileUrl}
+                                  className="w-full h-10 rounded-lg"
+                                />
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div className="flex flex-col items-center gap-4">
@@ -648,7 +660,7 @@ export default function Home() {
                             </div>
                           </>
                         ) : recordedAudio ? (
-                          <div className="flex flex-col items-center gap-4">
+                          <div className="flex flex-col items-center gap-4 w-full">
                             <div className="w-20 h-20 rounded-full bg-echo-accent/20 flex items-center justify-center text-echo-accent">
                               <FileAudio className="w-10 h-10" />
                             </div>
@@ -658,6 +670,15 @@ export default function Home() {
                             <p className="text-sm text-gray-500 dark:text-gray-400">
                               Audio Recorded
                             </p>
+                            {recordedUrl && (
+                              <div className="w-full max-w-md mt-2 px-4 z-20 relative">
+                                <audio
+                                  controls
+                                  src={recordedUrl}
+                                  className="w-full h-10 rounded-lg"
+                                />
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div className="text-gray-400 dark:text-gray-500 text-lg font-bold tracking-tight">
@@ -859,13 +880,18 @@ export default function Home() {
             {/* AI Models Showcase Section */}
             <ModelShowcase />
 
+            <Pricing />
+
             {/* <AdUnit className="w-full" label="Sponsored" /> */}
           </div>
         </section>
       </div>
 
       <footer className="mt-8 mb-4 text-center text-gray-500 text-sm relative z-10">
-        <p>&copy; {mounted ? new Date().getFullYear() : "2026"} EcoNotes. All rights reserved.</p>
+        <p>
+          &copy; {mounted ? new Date().getFullYear() : "2026"} EcoNotes. All
+          rights reserved.
+        </p>
       </footer>
     </div>
   );
