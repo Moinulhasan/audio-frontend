@@ -1,7 +1,7 @@
 const nextConfig = {
   output: 'export',
   // Optional: Add a trailing slash to all URLs, useful for some hosting configurations
-  trailingSlash: true, 
+  trailingSlash: true,
 };
 
 module.exports = nextConfig;  

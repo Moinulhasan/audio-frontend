@@ -9,7 +9,7 @@ import { apiFetch } from "@/lib/api";
 
 export default function ContactPage() {
     const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
-    const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@econotes.com";
+    const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "info@echonotestudio.com";
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
